@@ -125,3 +125,70 @@ void eliminateDeadCode(vector<string>& tacList) {
 
     tacList = optimized;
 }
+
+
+struct ExprNode {
+    string data;
+    ExprNode* left;
+    ExprNode* right;
+    ExprNode(string val) : data(val), left(nullptr), right(nullptr) {}
+};
+
+ExprNode* constructTree(const vector<string>& postfix) {
+    stack<ExprNode*> treeStack;
+
+    for (const string& token : postfix) {
+        if (isalnum(token[0]) && token.length() == 1) {
+            treeStack.push(new ExprNode(token));
+        } else {
+            ExprNode* right = treeStack.top(); treeStack.pop();
+            ExprNode* left = treeStack.top(); treeStack.pop();
+            ExprNode* node = new ExprNode(token);
+            node->left = left;
+            node->right = right;
+            treeStack.push(node);
+        }
+    }
+    return treeStack.top();
+}
+
+void displayTree(ExprNode* root, int depth = 0) {
+    if (!root) return;
+    displayTree(root->right, depth + 1);
+    for (int i = 0; i < depth; ++i) cout << "    ";
+    cout << root->data << endl;
+    displayTree(root->left, depth + 1);
+}
+
+void handleSimpleLoop(const string& loopExpr, map<string, int>& symbolTable) {
+    size_t start = loopExpr.find('(');
+    size_t end = loopExpr.find(')');
+    string inside = loopExpr.substr(start + 1, end - start - 1);
+
+    stringstream ss(inside);
+    string init, cond, inc;
+    getline(ss, init, ';');
+    getline(ss, cond, ';');
+    getline(ss, inc, ';');
+
+    string var = init.substr(0, init.find('='));
+    int startVal = stoi(init.substr(init.find('=') + 1));
+    int limit = stoi(cond.substr(cond.find('<') + 1));
+
+    for (int i = startVal; i < limit; ++i) {
+        cout << "// Iteration " << i << endl;
+        cout << var << " = " << i << endl;
+        // Add expression execution here if needed
+    }
+}
+
+// Split string by delimiter
+vector<string> splitExpressions(const string& input, char delimiter = ':') {
+    vector<string> result;
+    stringstream ss(input);
+    string token;
+    while (getline(ss, token, delimiter)) {
+        if (!token.empty()) result.push_back(token);
+    }
+    return result;
+}
