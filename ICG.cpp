@@ -61,7 +61,6 @@ vector<string> convertToPostfix(const string& expr) {
     return result;
 }
 
-
 vector<string> createTAC(const vector<string>& postfix, map<string, int>& table) {
     stack<string> stk;
     vector<string> tac;
@@ -125,7 +124,6 @@ void eliminateDeadCode(vector<string>& tacList) {
 
     tacList = optimized;
 }
-
 
 struct ExprNode {
     string data;
@@ -191,4 +189,56 @@ vector<string> splitExpressions(const string& input, char delimiter = ':') {
         if (!token.empty()) result.push_back(token);
     }
     return result;
+}
+
+void processExpression(const string& expr) {
+    map<string, int> symbolTable;
+
+    if (expr.find("for") != string::npos) {
+        handleSimpleLoop(expr, symbolTable);
+        return;
+    }
+
+    size_t eqIndex = expr.find('=');
+    if (eqIndex == string::npos) {
+        cerr << "Error: '=' not found in expression.\n";
+        return;
+    }
+
+    string leftVar = expr.substr(0, eqIndex);
+    string rightExpr = expr.substr(eqIndex + 1);
+
+    vector<string> postfixExpr = convertToPostfix(rightExpr);
+    vector<string> tacCode = createTAC(postfixExpr, symbolTable);
+    tacCode.push_back(leftVar + " = " + "t" + to_string(tempVarID - 1));
+
+    cout << "\nThree Address Code (TAC):\n";
+    for (const auto& line : tacCode) cout << line << endl;
+
+    applyConstantFolding(tacCode);
+    cout << "\nOptimized TAC (After Constant Folding):\n";
+    for (const auto& line : tacCode) cout << line << endl;
+
+    eliminateDeadCode(tacCode);
+    cout << "\nTAC After Dead Code Elimination:\n";
+    for (const auto& line : tacCode) cout << line << endl;
+
+    ExprNode* exprRoot = constructTree(postfixExpr);
+    cout << "\nFormatted Expression Tree:\n";
+    displayTree(exprRoot);
+}
+
+int main() {
+    string input;
+    cout << "Enter expressions or loops separated by ':'\n";
+    getline(cin, input);
+
+    vector<string> expressions = splitExpressions(input);
+
+    for (size_t i = 0; i < expressions.size(); ++i) {
+        cout << "\n=== Processing Expression " << i + 1 << " ===\n";
+        processExpression(expressions[i]);
+    }
+
+    return 0;
 }
